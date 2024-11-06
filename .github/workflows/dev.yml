@@ -1,0 +1,32 @@
+name: Deploy Dev
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  deploy_dev:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: SSH into Ubuntu Server and Deploy
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.DEV_SERVER_HOST }}
+          username: ${{ secrets.DEV_SERVER_USERNAME }}
+          password: ${{ secrets.DEV_SERVER_PASSWORD }}
+          port: ${{ secrets.DEV_SERVER_PORT }}
+          script: |
+            cd ~/pnl-software/dev/yaly-couture-fe
+            git checkout develop
+            git fetch -p
+            git pull
+            cd ..
+            docker stop pnl-yalycouture-frontend || true
+            docker rm  pnl-yalycouture-frontend || true
+            docker rmi dev_pnl-yalycouture-frontend
+            docker compose up -d
